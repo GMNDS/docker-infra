@@ -9,7 +9,7 @@ services:
       - TZ=America/Sao_Paulo
 
     volumes:
-      - ${DOCKER_ROOT}/jellyfin:/config
+      - ${DOCKER_ROOT}/volumes/jellyfin:/config
       - /asteri/media:/media
 
     networks:
