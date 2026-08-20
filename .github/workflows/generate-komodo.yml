@@ -23,13 +23,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate resources.toml
-        shell: bash
-        run: |
-          chmod +x komodo/generate-resources.sh
-          ./komodo/generate-resources.sh
+      - name: Instalar dependências
+        run: python3 -m pip install tomlkit
 
-      - name: Commit generated resources
+      - name: Gerar resources.toml
+        run: python3 komodo/generate-resources.py
+
+      - name: Commitar resources
         shell: bash
         run: |
           if git diff --quiet -- komodo/resources.toml; then
