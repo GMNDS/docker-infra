@@ -16,7 +16,64 @@ GIT_ACCOUNT="gmnds"
 REPO="gmnds/docker-infra"
 BRANCH="main"
 
+# Resources que devem existir no Komodo,
+# mas não devem ser deployados automaticamente.
+NO_AUTO_DEPLOY=(
+    "portainer"
+)
+
 : > "$OUTPUT"
+
+should_auto_deploy() {
+    local name="$1"
+
+    for excluded in "${NO_AUTO_DEPLOY[@]}"; do
+        if [ "$name" = "$excluded" ]; then
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+find_stack_files() {
+    local dir="$1"
+    local -n result="$2"
+
+    result=()
+
+    # Arquivo principal preferencial
+    if [ -f "$dir/stack.yaml" ]; then
+        result=("stack.yaml")
+        return
+    fi
+
+    if [ -f "$dir/stack.yml" ]; then
+        result=("stack.yml")
+        return
+    fi
+
+    if [ -f "$dir/compose.yaml" ]; then
+        result=("compose.yaml")
+        return
+    fi
+
+    if [ -f "$dir/compose.yml" ]; then
+        result=("compose.yml")
+        return
+    fi
+
+    # Caso como Chatwoot: múltiplos YAML/YML
+    while IFS= read -r file; do
+        result+=("$(basename "$file")")
+    done < <(
+        find "$dir" \
+            -maxdepth 1 \
+            -type f \
+            \( -name '*.yaml' -o -name '*.yml' \) \
+            | sort
+    )
+}
 
 generate_stack() {
     local dir="$1"
@@ -24,52 +81,54 @@ generate_stack() {
     local target="$3"
 
     local name
-    name="$(basename "$dir")"
-
+    local relative_dir
     local files=()
 
-    # Arquivo principal preferencial
-    if [ -f "$dir/stack.yaml" ]; then
-        files=("stack.yaml")
-    elif [ -f "$dir/stack.yml" ]; then
-        files=("stack.yml")
-    elif [ -f "$dir/compose.yaml" ]; then
-        files=("compose.yaml")
-    elif [ -f "$dir/compose.yml" ]; then
-        files=("compose.yml")
-    else
-        # Ex.: Chatwoot com múltiplos YAMLs
-        while IFS= read -r file; do
-            files+=("$(basename "$file")")
-        done < <(
-            find "$dir" -maxdepth 1 -type f \
-                \( -name '*.yaml' -o -name '*.yml' \) \
-                | sort
-        )
-    fi
+    name="$(basename "$dir")"
+    relative_dir="${dir#"$ROOT_DIR"/}"
 
-    [ "${#files[@]}" -gt 0 ] || return
+    find_stack_files "$dir" files
+
+    # Ignora diretórios sem YAML/YML
+    if [ "${#files[@]}" -eq 0 ]; then
+        echo "Ignorando '$relative_dir': nenhum YAML/YML encontrado." >&2
+        return
+    fi
 
     printf '[[stack]]\n' >> "$OUTPUT"
     printf 'name = "%s"\n' "$name" >> "$OUTPUT"
+
+    if should_auto_deploy "$name"; then
+        printf 'deploy = true\n' >> "$OUTPUT"
+    else
+        printf 'deploy = false\n' >> "$OUTPUT"
+    fi
+
     printf '[stack.config]\n' >> "$OUTPUT"
 
-    if [ "$target_type" = "server" ]; then
-        printf 'server = "%s"\n' "$target" >> "$OUTPUT"
-    else
-        printf 'swarm = "%s"\n' "$target" >> "$OUTPUT"
-    fi
+    case "$target_type" in
+        server)
+            printf 'server = "%s"\n' "$target" >> "$OUTPUT"
+            ;;
+        swarm)
+            printf 'swarm = "%s"\n' "$target" >> "$OUTPUT"
+            ;;
+        *)
+            echo "Target inválido para '$name': $target_type" >&2
+            exit 1
+            ;;
+    esac
 
     printf 'git_provider = "%s"\n' "$GIT_PROVIDER" >> "$OUTPUT"
     printf 'git_account = "%s"\n' "$GIT_ACCOUNT" >> "$OUTPUT"
     printf 'repo = "%s"\n' "$REPO" >> "$OUTPUT"
     printf 'branch = "%s"\n' "$BRANCH" >> "$OUTPUT"
-    local relative_dir="${dir#"$ROOT_DIR"/}"
     printf 'run_directory = "%s"\n' "$relative_dir" >> "$OUTPUT"
 
     printf 'file_paths = [' >> "$OUTPUT"
 
     local first=true
+
     for file in "${files[@]}"; do
         if "$first"; then
             first=false
@@ -83,31 +142,33 @@ generate_stack() {
     printf ']\n\n' >> "$OUTPUT"
 }
 
-
 #
 # Docker Compose
 #
-for dir in "$COMPOSE_DIR"/*; do
-    [ -d "$dir" ] || continue
+if [ -d "$COMPOSE_DIR" ]; then
+    for dir in "$COMPOSE_DIR"/*; do
+        [ -d "$dir" ] || continue
 
-    name="$(basename "$dir")"
+        name="$(basename "$dir")"
 
-    # Komodo é bootstrap, não gerencia a si mesmo
-    if [ "$name" = "komodo" ]; then
-        continue
-    fi
+        # Komodo é bootstrap e não gerencia a si próprio.
+        if [ "$name" = "komodo" ]; then
+            continue
+        fi
 
-    generate_stack "$dir" "server" "$SERVER"
-done
-
+        generate_stack "$dir" "server" "$SERVER"
+    done
+fi
 
 #
 # Docker Swarm
 #
-for dir in "$SWARM_DIR"/*; do
-    [ -d "$dir" ] || continue
+if [ -d "$SWARM_DIR" ]; then
+    for dir in "$SWARM_DIR"/*; do
+        [ -d "$dir" ] || continue
 
-    generate_stack "$dir" "swarm" "$SWARM"
-done
+        generate_stack "$dir" "swarm" "$SWARM"
+    done
+fi
 
 echo "Gerado: $OUTPUT"
