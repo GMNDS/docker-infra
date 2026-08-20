@@ -37,9 +37,9 @@ jobs:
             exit 0
           fi
 
-          git config user.name "automation"
-          git config user.email "automation@localhost"
+          git config user.name "GMNDS"
+          git config user.email "gabriel@gmnds.com"
 
           git add komodo/resources.toml
-          git commit -m "chore: regenerate Komodo resources"
+          git commit -m 'Atualiza `resources.toml` via actions'
           git push
