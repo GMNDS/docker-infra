@@ -1,0 +1,151 @@
+version: "3.7"
+
+# Campos de extensão para reduzir repetição
+x-n8n-env: &n8n-env
+  DB_TYPE: postgresdb
+  DB_POSTGRESDB_DATABASE: n8ndb
+  DB_POSTGRESDB_HOST: n8n-postgres
+  DB_POSTGRESDB_PORT: "5432"
+  DB_POSTGRESDB_USER: postgres
+  DB_POSTGRESDB_PASSWORD: "REDACTED_POSTGRES_PASSWORD"
+  N8N_ENCRYPTION_KEY: "REDACTED_N8N_ENCRYPTION_KEY"
+  N8N_HOST: "n8n.astrum.app.br"
+  N8N_EDITOR_BASE_URL: "https://n8n.astrum.app.br/"
+  N8N_PROTOCOL: https
+  NODE_ENV: production
+  WEBHOOK_URL: "https://webhook.astrum.app.br/"
+  EXECUTIONS_MODE: queue
+  N8N_REINSTALL_MISSING_PACKAGES: "true"
+  N8N_COMMUNITY_PACKAGES_ENABLED: "true"
+  N8N_NODE_PATH: "/home/note/.n8n/nodes"
+  QUEUE_BULL_REDIS_HOST: n8n-redis
+  QUEUE_BULL_REDIS_PORT: "6379"
+  QUEUE_BULL_REDIS_DB: "2"
+  NODE_FUNCTION_ALLOW_EXTERNAL: "moment,lodash,moment-with-locales"
+  EXECUTIONS_DATA_PRUNE: "true"
+  EXECUTIONS_DATA_MAX_AGE: "336" # 2 semanas
+  GENERIC_TIMEZONE: America/Sao_Paulo
+  TZ: America/Sao_Paulo
+
+x-deploy-common: &deploy-common
+  mode: replicated
+  placement:
+    constraints:
+      - node.role == manager
+      - node.label.type == work
+  resources:
+    limits:
+      cpus: "0.5"
+      memory: 1024M
+
+# Definição dos Serviços
+services:
+  # PostgreSQL - Banco de Dados
+  n8n-postgres:
+    image: postgres:15-alpine
+    networks:
+      - traefik_proxy
+    environment:
+      POSTGRES_DB: n8ndb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "REDACTED_POSTGRES_PASSWORD"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2048M
+
+  # Redis - Fila de Tarefas
+  n8n-redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    networks:
+      - traefik_proxy
+    volumes:
+      - redis_data:/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # Definição do Serviço do Editor
+  n8n_editor:
+    image: n8nio/n8n:latest
+    command: start
+    networks:
+      - traefik_proxy
+    environment:
+      <<: *n8n-env
+    deploy:
+      <<: *deploy-common
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.n8n_editor.rule=Host(`n8n.astrum.app.br`)
+        - traefik.http.routers.n8n_editor.tls=true
+        - traefik.http.routers.n8n_editor.entrypoints=websecure
+        - traefik.http.routers.n8n_editor.priority=1
+        # - traefik.http.routers.n8n_editor.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.n8n_editor.service=n8n_editor
+        - traefik.http.services.n8n_editor.loadbalancer.server.port=5678
+        - traefik.http.services.n8n_editor.loadbalancer.passHostHeader=1
+
+  n8n_webhook:
+    image: n8nio/n8n:latest
+    command: webhook
+    networks:
+      - traefik_proxy
+    environment:
+      <<: *n8n-env
+    deploy:
+      <<: *deploy-common
+      replicas: 2
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.n8n_webhook.rule=Host(`webhook.astrum.app.br`)
+        - traefik.http.routers.n8n_webhook.tls=true
+        - traefik.http.routers.n8n_webhook.entrypoints=websecure
+        - traefik.http.routers.n8n_webhook.priority=1
+        # - traefik.http.routers.n8n_webhook.tls.certresolver=letsencryptresolver
+        - traefik.http.routers.n8n_webhook.service=n8n_webhook
+        - traefik.http.services.n8n_webhook.loadbalancer.server.port=5678
+        - traefik.http.services.n8n_webhook.loadbalancer.passHostHeader=1
+
+  n8n_worker:
+    image: n8nio/n8n:latest
+    command: worker --concurrency=10
+    networks:
+      - traefik_proxy
+    environment:
+      <<: *n8n-env
+    deploy:
+      <<: *deploy-common
+      replicas: 1
+
+networks:
+  traefik_proxy:
+    name: traefik_proxy
+    external: true
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  n8n:
+    external: true
+    name: n8n

@@ -1,0 +1,38 @@
+services:
+  app:
+    image: portainer/portainer-ee:latest
+    # ports:
+      #- 8000:8000
+      # - 9443:9443
+    # command: -H tcp://socket-proxy:2375 --http-enabled
+    volumes:
+      # - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_ROOT}/volumes/portainer:/data
+      - /swarm/env_files:/env_files
+      - /swarm/compose:/compose
+    networks:
+      traefik_proxy:
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+      labels:
+        # Frontend
+        - "traefik.enable=true"
+        - "traefik.http.routers.portainer.rule=Host(`portainer.asterimoon.com`) || Host(`portainer.astrum.app.br`)"
+        - "traefik.http.routers.portainer.entrypoints=websecure"
+        - "traefik.http.routers.portainer.tls=true"
+        - "traefik.http.routers.portainer.service=portainer"
+        - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+        - "traefik.http.routers.portainer_edge.rule=Host(`edge.asterimoon.com`) || Host(`edge.astrum.app.br`)"
+        - "traefik.http.routers.portainer_edge.entrypoints=websecure"
+        - "traefik.http.routers.portainer_edge.tls=true"
+        - "traefik.http.services.portainer_edge.loadbalancer.server.port=8000"
+        - "traefik.http.routers.portainer_edge.service=portainer_edge"
+networks:
+  traefik_proxy:
+    external: true

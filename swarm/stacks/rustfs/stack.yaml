@@ -1,0 +1,61 @@
+services:
+  rustfs:
+    image: rustfs/rustfs:latest
+
+    secrets:
+      - rustfs_secret_key
+      - rustfs_access_key
+
+    environment:
+      - RUSTFS_ADDRESS=0.0.0.0:9000
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_LOG_LEVEL=info
+      - RUSTFS_CORS_ALLOWED_ORIGINS=*
+      - RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS=*
+      - RUSTFS_LOG_LEVEL=debug
+      - RUSTFS_OBS_LOGGER_LEVEL=debug
+      - RUSTFS_SECRET_KEY_FILE=/run/secrets/rustfs_secret_key
+      - RUSTFS_ACCESS_KEY_FILE=/run/secrets/rustfs_access_key
+
+    volumes:
+      - rustfs-data:/data
+
+    networks:
+      - traefik_proxy
+
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+      labels:
+        - "traefik.enable=true"
+
+        - "traefik.http.routers.rustfs.rule=Host(`s3.astrum.app.br`)"
+        - "traefik.http.routers.rustfs.entrypoints=web,websecure"
+        - "traefik.http.routers.rustfs.tls=true"
+        - "traefik.http.routers.rustfs.service=rustfs"
+        - "traefik.http.services.rustfs.loadbalancer.server.port=9000"
+
+        - "traefik.http.routers.rustfs-console.rule=Host(`s3-console.astrum.app.br`)"
+        - "traefik.http.routers.rustfs-console.entrypoints=web,websecure"
+        - "traefik.http.routers.rustfs-console.tls=true"
+        - "traefik.http.routers.rustfs-console.service=rustfs-console"
+        - "traefik.http.services.rustfs-console.loadbalancer.server.port=9001"
+
+volumes:
+  rustfs-data:
+
+secrets:
+  rustfs_secret_key:
+    external: true
+  rustfs_access_key:
+    external: true
+
+networks:
+  traefik_proxy:
+    external: true

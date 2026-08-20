@@ -1,0 +1,121 @@
+services:
+  dokploy-traefik:
+    image: traefik:v3.7.1
+
+    secrets:
+      - source: cf_token
+        target: cf_token
+
+    networks:
+    # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes
+      - traefik_proxy
+      - dokploy-network
+
+    environment:
+      - CLOUDFLARE_DNS_API_TOKEN_FILE=/run/secrets/cf_token
+      # - CF_API_EMAIL_FILE=/run/secrets/cf_mail
+      # - CF_API_KEY_FILE=/run/secrets/cf_traefik_api
+    ports:
+        # Expose Traefik's entry points to the Swarm
+        # Swarm requires the long syntax for ports.
+      - target: 80  # Container port (Traefik web entry point)
+        published: 80  # Host port exposed on the nodes
+        protocol: tcp
+        # 'host' mode binds directly to the node's IP where the task runs.
+        # 'ingress' mode uses Swarm's Routing Mesh (load balances across nodes).
+        # Choose based on your load balancing strategy. 'host' is often simpler if using an external LB.
+        mode: host
+
+      - target: 443 # Container port ( Traefik websecure entry point)
+        published: 443 # Host port
+        protocol: tcp
+        mode: host
+
+      - target: 8443 # Container port ( Traefik websecure entry point)
+        published: 8443 # Host port
+        protocol: tcp
+        mode: host
+
+      - target: 853 # Container port ( Traefik dns over tls entry point)
+        published: 853 # Host port
+        protocol: tcp
+        mode: host
+      # - target: 853 # Container port ( Traefik dns over tls entry point)
+      #   published: 853 # Host port
+      #   protocol: udp
+      #   mode: host
+
+      - target: 222 # Container port ( Traefik ssh entry point)
+        published: 222 # Host port
+        protocol: tcp
+        mode: host
+
+      - target: 8883
+        published: 8883
+        protocol: tcp
+        mode: host
+      
+    volumes:
+      # Mount the Docker socket for the Swarm provider
+      # This MUST be run from a manager node to access the Swarm API via the socket.
+      - /var/run/docker.sock:/var/run/docker.sock   # Swarm API socket
+      - ${DOCKER_ROOT}/volumes/traefik/certs:/certs
+      - ${DOCKER_ROOT}/volumes/traefik/dynamic:/dynamic
+      - ${DOCKER_ROOT}/volumes/traefik/traefik.yml:/etc/traefik/traefik.yml
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+
+      # Placement constraints restrict where Traefik tasks can run.
+      # Running on manager nodes is common for accessing the Swarm API via the socket.
+        constraints:
+          - node.role == manager
+
+      # Traefik Dynamic configuration via labels
+      # In Swarm, labels on the service definition configure Traefik routing for that service.
+      labels:
+        - "traefik.enable=true"
+
+        # Dashboard router
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.astrum.app.br`)"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.tls=true"
+        - "traefik.http.routers.dashboard.middlewares=authentik@file"
+
+        # Basic‑auth middleware
+        # - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$apr1$$r0BFbaGx$$/mU4SibH4.UjssyP3qO2g0"
+        # - "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
+
+        # Service hint
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  # Deploy the Whoami application
+  # whoami:
+  #   image: traefik/whoami
+  #   networks:
+  #     - traefik_proxy
+  #   deploy:
+  #     labels:
+  #       # Enable Service discovery for Traefik
+  #       - "traefik.enable=true"
+  #       # Define the WHoami router rule
+  #       - "traefik.http.routers.whoami.rule=Host(`whoami.asteri.local`)"
+  #       # Expose Whoami on the HTTPS entrypoint
+  #       - "traefik.http.routers.whoami.entrypoints=websecure"
+  #       # Enable TLS
+  #       - "traefik.http.routers.whoami.tls=true"
+  #       # Expose the whoami port number to Traefik
+  #       - traefik.http.services.whoami.loadbalancer.server.port=80
+
+# Define the overlay network for Swarm
+networks:
+  traefik_proxy:
+    external: true
+  dokploy-network:
+     external: true
+secrets:
+  cf_token:
+    external: true

@@ -1,0 +1,63 @@
+services:
+  app:
+    image: adguard/adguardhome
+    # expose:
+    #   - "80"
+    #   - "53"
+    #   - "853"
+    ports:
+      - target: 53
+        published: 53
+        protocol: tcp
+        mode: host
+      - target: 53
+        published: 53
+        protocol: udp
+        mode: host
+      - target: 853
+        published: 853
+        protocol: udp
+        mode: host
+    volumes:
+      - ${DOCKER_ROOT}/volumes/adguardhome/work:/opt/adguardhome/work
+      - ${DOCKER_ROOT}/volumes/adguardhome/conf:/opt/adguardhome/conf
+      - ${DOCKER_ROOT}/volumes/adguardhome/certs:/opt/adguardhome/certs
+    restart: unless-stopped
+    networks:
+      traefik_proxy:
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == "asteri-is"
+      restart_policy:
+        condition: any
+      labels:
+        - "traefik.enable=true"
+        # ADGUARD
+        # - "traefik.http.routers.adguard.entrypoints=web"
+        # - "traefik.http.routers.adguard.rule=Host(`dns.asterimoon.com`)" # change with your own domain/sub domain
+        # - "traefik.htpp.routers.adguard.service=adguard"
+        # - "traefik.http.services.adguard.loadbalancer.server.port=3000"
+        # Painel WEB e DOH
+        - "traefik.http.routers.adguard-secure.rule=Host(`dns.asterimoon.com`)" # change with your own domain/sub domain
+        - "traefik.http.routers.adguard-secure.entrypoints=websecure"
+        - "traefik.http.routers.adguard-secure.tls=true"
+        - "traefik.http.routers.adguard-secure.service=adguard-secure"
+        - "traefik.http.services.adguard-secure.loadbalancer.server.port=80" # 3000 Change to 80 after first reboot and settings admin account
+        # DOT
+        - "traefik.tcp.routers.adguard-tls.rule=HostSNI(`dns.asterimoon.com`)" # change with your own domain/sub domain
+        - "traefik.tcp.routers.adguard-tls.tls=true"
+        - "traefik.tcp.routers.adguard-tls.entrypoints=dot"
+        - "traefik.tcp.routers.adguard-tls.tls.passthrough=true"
+        - "traefik.tcp.routers.adguard-tls.service=adguard-tls"
+        - "traefik.tcp.services.adguard-tls.loadbalancer.server.port=853"
+        # DOQ
+        # - "traefik.udp.routers.adguard-doq.entrypoints=doq"
+        # - "traefik.udp.routers.adguard-doq.rule=HostSNI(`dns.asterimoon.com`)" 
+        # - "traefik.udp.routers.adguard-doq.service=adguard-doq"
+        # - "traefik.udp.services.adguard-doq.loadbalancer.server.port=853"
+
+networks:
+  traefik_proxy:
+    external: true

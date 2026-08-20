@@ -1,0 +1,25 @@
+# Dados persistentes
+appdata/
+
+# Secrets
+secrets/*
+
+# Arquivos de ambiente com valores reais
+.env
+.env.*
+env_files/*
+
+# Backups
+*.bak
+*.backup
+*.sql
+*.dump
+
+# Temporários
+*.tmp
+*.log
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store

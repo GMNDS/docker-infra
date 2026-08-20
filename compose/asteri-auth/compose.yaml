@@ -1,0 +1,134 @@
+---
+
+services:
+  #PostgreSQL
+  postgresql:
+    container_name: auth-postgresql
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test:
+      - CMD-SHELL
+      - pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
+      timeout: 5s
+    volumes:
+      - /srv/docker/volumes/asteri-auth/database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-authentik}
+      POSTGRES_DB: ${PG_DB:-authentik}
+    env_file:
+      - .env
+
+  #Server
+  server:
+    container_name: auth-server
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.3}
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    volumes:
+      #- /srv/docker/volumes/asteri-auth/media:/media
+      - /srv/docker/volumes/asteri-auth/custom-templates:/templates
+    env_file:
+      - .env
+    ports:
+    - "${COMPOSE_PORT_HTTP:-9000}:9000"
+    - "${COMPOSE_PORT_HTTPS:-9443}:9443"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      default:
+      traefik_proxy:
+        # ipv4_address: 192.168.25.3
+        # ipv6_address: 2001:db8:bad1::3
+    labels:
+      - "traefik.enable=true"
+      ## HTTP Routers
+      - "traefik.http.routers.authentik-rtr.rule=Host(`auth.asterimoon.com`) || Host(`auth.astrum.app.br`)"
+      - "traefik.http.routers.authentik-rtr.entrypoints=websecure"
+      - "traefik.http.routers.authentik-rtr.tls=true"
+      - "traefik.http.routers.authentik-rtr.service=authentik-svc"
+      #- "traefik.http.routers.authentik-rtr.tls.certresolver=le"
+      ## Individual Application forwardAuth regex (catch any subdomain using individual application forwardAuth)  
+      - "traefik.http.routers.authentik-rtr-outpost.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.asterimoon.com`) && PathPrefix(`/outpost.goauthentik.io/`)"
+      - "traefik.http.routers.authentik-rtr-outpost.entrypoints=websecure"
+      - "traefik.http.routers.authentik-rtr-outpost.tls=true"
+      ## HTTP Services
+      - "traefik.http.services.authentik-svc.loadBalancer.server.port=9000"
+
+  #Worker
+  worker:
+    container_name: auth-worker
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.3}
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Removing `user: root` also prevents the worker from fixing the permissions
+    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
+    # (1000:1000 by default)
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/docker/volumes/asteri-auth/media:/media
+      - /srv/docker/volumes/asteri-auth/certs:/certs
+      - /srv/docker/volumes/asteri-auth/custom-templates:/templates
+    env_file:
+      - .env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  ldap:
+    container_name: auth-ldap
+    image: ghcr.io/goauthentik/ldap:${AUTHENTIK_TAG:-2025.3}
+    restart: unless-stopped
+    secrets:
+      - authentik_ldap_token
+    environment:
+      AUTHENTIK_HOST: https://auth.asterimoon.com
+      AUTHENTIK_HOST_BROWSER: https://auth.asterimoon.com
+      AUTHENTIK_INSECURE: false
+      AUTHENTIK_TOKEN: file:///run/secrets/authentik_ldap_token
+    ports:
+      - 389:3389
+      - 636:6636
+    networks:
+      default:
+      traefik_proxy:
+
+networks:
+  traefik_proxy:
+    external: true
+
+secrets:
+  #Authentik_PG
+  # authentik_postgresql_db:
+  #   file: /home/yon4n/docker/secrets/authentik_postgresql_db
+  # authentik_postgresql_user:
+  #   file: /home/yon4n/docker/secrets/authentik_postgresql_user
+  # authentik_postgresql_password:
+  #   file: /home/yon4n/docker/secrets/authentik_postgresql_password
+  # Authentik
+  # authentik_secret_key:
+  #   file: /home/yon4n/docker/secrets/authentik_secret_key
+  # authentik_mail_password:
+  #   file: /home/yon4n/docker/secrets/authentik_mail_password
+  authentik_ldap_token:
+    file: /home/yon4n/docker/secrets/authentik_ldap_token

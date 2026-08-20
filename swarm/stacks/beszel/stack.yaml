@@ -1,0 +1,85 @@
+
+services:
+  beszel:
+    image: henrygd/beszel:latest
+
+    environment:
+      APP_URL: https://beszel.astrum.app.br
+      TZ: America/Sao_Paulo
+
+    volumes:
+      - ${DOCKER_ROOT}/volumes/beszel/data:/beszel_data
+      - ${DOCKER_ROOT}/volumes/beszel/socket:/beszel_socket
+
+    networks:
+      - traefik_proxy
+
+    healthcheck:
+      test:
+        - CMD
+        - /beszel
+        - health
+        - --url
+        - http://localhost:8090
+      interval: 120s
+      start_period: 10s
+      timeout: 5s
+
+    deploy:
+      replicas: 1
+
+      restart_policy:
+        condition: any
+        delay: 5s
+
+      placement:
+        constraints:
+          - node.hostname == asteri-is
+
+      labels:
+        - "traefik.enable=true"
+
+        - "traefik.http.routers.beszel.rule=Host(`beszel.astrum.app.br`)"
+        - "traefik.http.routers.beszel.entrypoints=websecure"
+        - "traefik.http.routers.beszel.tls=true"
+        - "traefik.http.routers.beszel.service=beszel"
+
+        - "traefik.http.services.beszel.loadbalancer.server.port=8090"
+        - "traefik.swarm.network=traefik_proxy"
+
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+
+    networks:
+      - host
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - beszel_agent_data:/var/lib/beszel-agent
+
+      # Exemplo para monitorar outra partição:
+      # - /mnt/disk/.beszel:/extra-filesystems/sda1:ro
+
+    environment:
+      LISTEN: "45876"
+      KEY: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINeKkFRfbenk7UleOitiJumc6DOQaneFjHxja3UK9u5J"
+      TOKEN: "b828c5ac-45ad-4da7-aaaf-f1385fb99ad6"
+      HUB_URL: "https://beszel.astrum.app.br"
+
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 30s
+
+
+volumes:
+  beszel_agent_data:
+
+networks:
+  traefik_proxy:
+    external: true
+  host:
+    external: true
+    name: host

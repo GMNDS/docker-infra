@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  chatwoot_migrate:
+    image: chatwoot/chatwoot:v4.8.0
+    command: bundle exec rails db:chatwoot_prepare
+    environment:
+      - RAILS_ENV=production
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=REDACTED_POSTGRES_PASSWORD
+      - POSTGRES_DATABASE=chatwoot
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY_BASE=REDACTED_SECRET_KEY_BASE
+    networks:
+      - traefik_proxy
+    deploy:
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  traefik_proxy:
+    external: true

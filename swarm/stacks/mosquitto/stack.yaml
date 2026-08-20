@@ -1,0 +1,44 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+
+    networks:
+      - traefik_proxy
+
+    volumes:
+      - ${DOCKER_ROOT}/volumes/mosquitto/data:/mosquitto/data
+      - ${DOCKER_ROOT}/volumes/mosquitto/log:/mosquitto/log
+      - ${DOCKER_ROOT}/volumes/mosquitto/config:/mosquitto/config
+
+    deploy:
+      mode: replicated
+      replicas: 1
+
+      placement:
+        constraints:
+          - node.role == manager
+
+      labels:
+        - "traefik.enable=true"
+
+        # MQTT TCP (TLS)
+        - "traefik.tcp.routers.mqtt.rule=HostSNI(`mqtt.astrum.app.br`)"
+        - "traefik.tcp.routers.mqtt.entrypoints=mqttsecure"
+        - "traefik.tcp.routers.mqtt.tls=true"
+        - "traefik.tcp.services.mqtt.loadbalancer.server.port=1883"
+
+        # WSS (HTTP)
+        - "traefik.http.routers.mqtt_wss.rule=Host(`mqtt.astrum.app.br`)"
+        - "traefik.http.routers.mqtt_wss.entrypoints=websecure"
+        - "traefik.http.routers.mqtt_wss.tls=true"
+        - "traefik.http.routers.mqtt_wss.middlewares=mqtt_ws"
+        - "traefik.http.services.mqtt_wss.loadbalancer.server.port=1884"
+
+        # Middleware WebSocket
+        - "traefik.http.middlewares.mqtt_ws.headers.customrequestheaders.Connection=Upgrade"
+        - "traefik.http.middlewares.mqtt_ws.headers.customrequestheaders.Upgrade=websocket"     
+
+networks:
+  traefik_proxy:
+    external: true
+

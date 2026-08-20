@@ -1,0 +1,41 @@
+services:
+  server:
+    image: codeberg.org/forgejo/forgejo:13
+    # container_name: forgejo
+    environment:
+      - USER_UID=1002
+      - USER_GID=1002
+    networks:
+      - traefik_proxy
+    volumes:
+      - ${DOCKER_ROOT}/volumes/forgejo:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    # ports:
+      # - '3000:3000'
+      # - '222:22'
+    deploy:
+      replicas: 1
+      placement:
+      # Placement constraints restrict where Traefik tasks can run.
+      # Running on manager nodes is common for accessing the Swarm API via the socket.
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+      labels:
+        # http
+        - "traefik.enable=true"
+        - "traefik.http.routers.forgejo.entrypoints=web,websecure"
+        - "traefik.http.routers.forgejo.rule=Host(`git.astrum.app.br`)"
+        - "traefik.http.routers.forgejo.tls=true"
+        - "traefik.http.services.forgejo.loadbalancer.server.port=3000"
+
+        # ssh
+        - "traefik.tcp.routers.forgejo-ssh.entrypoints=ssh"
+        - "traefik.tcp.routers.forgejo-ssh.rule=HostSNI(`*`)"
+        - "traefik.tcp.services.forgejo-ssh.loadbalancer.server.port=22"
+
+networks:
+  traefik_proxy:
+    external: true
