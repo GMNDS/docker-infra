@@ -76,6 +76,17 @@ run_directory = "swarm/stacks/gossip-girl"
 file_paths = ["stack.yaml"]
 
 [[stack]]
+name = "jellyfin"
+[stack.config]
+swarm = "asteri"
+git_provider = "github.com"
+git_account = "gmnds"
+repo = "gmnds/docker-infra"
+branch = "main"
+run_directory = "swarm/stacks/jellyfin"
+file_paths = ["stack.yaml"]
+
+[[stack]]
 name = "mosquitto"
 [stack.config]
 swarm = "asteri"
