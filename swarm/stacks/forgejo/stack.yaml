@@ -3,8 +3,8 @@ services:
     image: codeberg.org/forgejo/forgejo:13
     # container_name: forgejo
     environment:
-      - USER_UID=1002
-      - USER_GID=1002
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
     networks:
       - traefik_proxy
     volumes:
