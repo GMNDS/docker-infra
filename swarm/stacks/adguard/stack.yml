@@ -29,7 +29,7 @@ services:
       replicas: 1
       placement:
         constraints:
-          - node.hostname == "asteri-is"
+          - node.hostname == asteri-is
       restart_policy:
         condition: any
       labels:
