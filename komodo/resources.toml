@@ -102,6 +102,7 @@ run_directory = "swarm/stacks/chatwoot"
 file_paths = [
   "chatwoot.yml",
   "ev.yml",
+  "migrate.yml",
   "pg.yml",
   "redis.yml"
 ]
