@@ -1,5 +1,6 @@
 [[stack]]
 name = "asteri-auth"
+deploy = true
 [stack.config]
 server = "asteri-is"
 git_provider = "github.com"
@@ -11,6 +12,7 @@ file_paths = ["compose.yaml"]
 
 [[stack]]
 name = "adguard"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -22,6 +24,7 @@ file_paths = ["stack.yml"]
 
 [[stack]]
 name = "beszel"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -33,6 +36,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "chatwoot"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -44,6 +48,7 @@ file_paths = ["chatwoot.yml", "ev.yml", "migrate.yml", "pg.yml", "redis.yml"]
 
 [[stack]]
 name = "dokploy"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -55,6 +60,7 @@ file_paths = ["stack.yml"]
 
 [[stack]]
 name = "forgejo"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -66,6 +72,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "gossip-girl"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -77,6 +84,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "jellyfin"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -88,6 +96,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "mosquitto"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -99,6 +108,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "n8n"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -110,6 +120,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "portainer"
+deploy = false
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -121,6 +132,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "rustfs"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -132,6 +144,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "traefik"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
@@ -143,6 +156,7 @@ file_paths = ["stack.yaml"]
 
 [[stack]]
 name = "vaultwarden"
+deploy = true
 [stack.config]
 swarm = "asteri"
 git_provider = "github.com"
