@@ -249,6 +249,25 @@ DOMAIN = [[DOMAIN]]
 ##
 
 [[stack]]
+name = "proxy"
+deploy = true
+[stack.config]
+swarm = "asteri"
+git_account = "gmnds"
+repo = "gmnds/docker-infra"
+run_directory = "swarm/stacks/proxy"
+file_paths = ["stack.yaml"]
+environment = """
+PUID=[[PUID]]
+PGID=[[PGID]]
+TZ=[[TZ]]
+DOCKER_ROOT=[[DOCKER_ROOT]]
+DOMAIN=[[DOMAIN]]
+"""
+
+##
+
+[[stack]]
 name = "rustfs"
 deploy = true
 [stack.config]
@@ -256,25 +275,6 @@ swarm = "asteri"
 git_account = "gmnds"
 repo = "gmnds/docker-infra"
 run_directory = "swarm/stacks/rustfs"
-file_paths = ["stack.yaml"]
-environment = """
-PUID = [[PUID]]
-PGID = [[PGID]]
-TZ = [[TZ]]
-DOCKER_ROOT = [[DOCKER_ROOT]]
-DOMAIN = [[DOMAIN]]
-"""
-
-##
-
-[[stack]]
-name = "traefik"
-deploy = true
-[stack.config]
-swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
-run_directory = "swarm/stacks/traefik"
 file_paths = ["stack.yaml"]
 environment = """
 PUID = [[PUID]]
@@ -305,24 +305,6 @@ DOMAIN = [[DOMAIN]]
 
 ##
 
-[[stack]]
-name = "proxy"
-deploy = true
-
-[stack.config]
-swarm = "asteri"
-git_provider = "github.com"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
-branch = "main"
-run_directory = "swarm/stacks/proxy"
-file_paths = ["stack.yaml"]
-environment = """PUID=[[PUID]]
-PGID=[[PGID]]
-TZ=[[TZ]]
-DOCKER_ROOT=[[DOCKER_ROOT]]
-DOMAIN=[[DOMAIN]]
-"""
 [[repo]]
 name = "astrum-stack"
 [repo.config]
