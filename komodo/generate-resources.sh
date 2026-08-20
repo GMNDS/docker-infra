@@ -1,33 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STACKS_DIR="swarm/stacks"
-OUTPUT="komodo/resources.toml"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# AJUSTE ESTES 4
+SWARM_DIR="$ROOT_DIR/swarm/stacks"
+COMPOSE_DIR="$ROOT_DIR/compose"
+OUTPUT="$SCRIPT_DIR/resources.toml"
+
+SERVER="asteri-is"
 SWARM="asteri"
+
 GIT_PROVIDER="github.com"
 GIT_ACCOUNT="gmnds"
 REPO="gmnds/docker-infra"
-
 BRANCH="main"
 
 : > "$OUTPUT"
 
-for dir in "$STACKS_DIR"/*; do
-    [ -d "$dir" ] || continue
+generate_stack() {
+    local dir="$1"
+    local target_type="$2"
+    local target="$3"
 
+    local name
     name="$(basename "$dir")"
 
-    files=()
+    local files=()
 
-    # Preferência: stack.yaml / stack.yml
+    # Arquivo principal preferencial
     if [ -f "$dir/stack.yaml" ]; then
         files=("stack.yaml")
     elif [ -f "$dir/stack.yml" ]; then
         files=("stack.yml")
+    elif [ -f "$dir/compose.yaml" ]; then
+        files=("compose.yaml")
+    elif [ -f "$dir/compose.yml" ]; then
+        files=("compose.yml")
     else
-        # Caso como Chatwoot: vários YAMLs
+        # Ex.: Chatwoot com múltiplos YAMLs
         while IFS= read -r file; do
             files+=("$(basename "$file")")
         done < <(
@@ -37,22 +48,28 @@ for dir in "$STACKS_DIR"/*; do
         )
     fi
 
-    # Ignora diretórios sem YAML
-    [ "${#files[@]}" -gt 0 ] || continue
+    [ "${#files[@]}" -gt 0 ] || return
 
     printf '[[stack]]\n' >> "$OUTPUT"
     printf 'name = "%s"\n' "$name" >> "$OUTPUT"
     printf '[stack.config]\n' >> "$OUTPUT"
-    printf 'swarm = "%s"\n' "$SWARM" >> "$OUTPUT"
+
+    if [ "$target_type" = "server" ]; then
+        printf 'server = "%s"\n' "$target" >> "$OUTPUT"
+    else
+        printf 'swarm = "%s"\n' "$target" >> "$OUTPUT"
+    fi
+
     printf 'git_provider = "%s"\n' "$GIT_PROVIDER" >> "$OUTPUT"
     printf 'git_account = "%s"\n' "$GIT_ACCOUNT" >> "$OUTPUT"
     printf 'repo = "%s"\n' "$REPO" >> "$OUTPUT"
     printf 'branch = "%s"\n' "$BRANCH" >> "$OUTPUT"
-    printf 'run_directory = "%s/%s"\n' "$STACKS_DIR" "$name" >> "$OUTPUT"
+    local relative_dir="${dir#"$ROOT_DIR"/}"
+    printf 'run_directory = "%s"\n' "$relative_dir" >> "$OUTPUT"
 
     printf 'file_paths = [' >> "$OUTPUT"
 
-    first=true
+    local first=true
     for file in "${files[@]}"; do
         if "$first"; then
             first=false
@@ -64,6 +81,33 @@ for dir in "$STACKS_DIR"/*; do
     done
 
     printf ']\n\n' >> "$OUTPUT"
+}
+
+
+#
+# Docker Compose
+#
+for dir in "$COMPOSE_DIR"/*; do
+    [ -d "$dir" ] || continue
+
+    name="$(basename "$dir")"
+
+    # Komodo é bootstrap, não gerencia a si mesmo
+    if [ "$name" = "komodo" ]; then
+        continue
+    fi
+
+    generate_stack "$dir" "server" "$SERVER"
+done
+
+
+#
+# Docker Swarm
+#
+for dir in "$SWARM_DIR"/*; do
+    [ -d "$dir" ] || continue
+
+    generate_stack "$dir" "swarm" "$SWARM"
 done
 
 echo "Gerado: $OUTPUT"

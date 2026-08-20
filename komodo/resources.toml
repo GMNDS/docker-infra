@@ -1,4 +1,15 @@
 [[stack]]
+name = "asteri-auth"
+[stack.config]
+server = "asteri-is"
+git_provider = "github.com"
+git_account = "gmnds"
+repo = "gmnds/docker-infra"
+branch = "main"
+run_directory = "compose/asteri-auth"
+file_paths = ["compose.yaml"]
+
+[[stack]]
 name = "adguard"
 [stack.config]
 swarm = "asteri"
