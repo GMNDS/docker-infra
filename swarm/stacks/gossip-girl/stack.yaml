@@ -15,7 +15,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.chat_generator.entrypoints=websecure"
-        - "traefik.http.routers.chat_generator.rule=Host(`${APP_DOMAIN?domain is necessary}`)"
+        - "traefik.http.routers.chat_generator.rule=Host(`gossip-girl.${DOMAIN?domain is necessary}`)"
         - "traefik.http.routers.chat_generator.tls=true"
         # - "traefik.http.routers.chat_generator.tls.certresolver=cf"
         - "traefik.http.services.chat_generator.loadbalancer.server.port=3000"
