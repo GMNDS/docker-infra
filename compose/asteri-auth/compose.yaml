@@ -15,7 +15,7 @@ services:
       - pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
       timeout: 5s
     volumes:
-      - /srv/docker/volumes/asteri-auth/database:/var/lib/postgresql/data
+      - ${DOCKER_ROOT}/volumes/asteri-auth/database:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: ${PG_PASS:?database password required}
       POSTGRES_USER: ${PG_USER:-authentik}
@@ -35,8 +35,8 @@ services:
       AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
     volumes:
-      #- /srv/docker/volumes/asteri-auth/media:/media
-      - /srv/docker/volumes/asteri-auth/custom-templates:/templates
+      #- ${DOCKER_ROOT}/volumes/asteri-auth/media:/media
+      - ${DOCKER_ROOT}/volumes/asteri-auth/custom-templates:/templates
     env_file:
       - .env
     ports:
@@ -86,9 +86,9 @@ services:
     user: root
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /srv/docker/volumes/asteri-auth/media:/media
-      - /srv/docker/volumes/asteri-auth/certs:/certs
-      - /srv/docker/volumes/asteri-auth/custom-templates:/templates
+      - ${DOCKER_ROOT}/volumes/asteri-auth/media:/media
+      - ${DOCKER_ROOT}/volumes/asteri-auth/certs:/certs
+      - ${DOCKER_ROOT}/volumes/asteri-auth/custom-templates:/templates
     env_file:
       - .env
     depends_on:
@@ -118,17 +118,5 @@ networks:
     external: true
 
 secrets:
-  #Authentik_PG
-  # authentik_postgresql_db:
-  #   file: /home/yon4n/docker/secrets/authentik_postgresql_db
-  # authentik_postgresql_user:
-  #   file: /home/yon4n/docker/secrets/authentik_postgresql_user
-  # authentik_postgresql_password:
-  #   file: /home/yon4n/docker/secrets/authentik_postgresql_password
-  # Authentik
-  # authentik_secret_key:
-  #   file: /home/yon4n/docker/secrets/authentik_secret_key
-  # authentik_mail_password:
-  #   file: /home/yon4n/docker/secrets/authentik_mail_password
   authentik_ldap_token:
-    file: /home/yon4n/docker/secrets/authentik_ldap_token
+    file: ${DOCKER_ROOT}/secrets/authentik_ldap_token
