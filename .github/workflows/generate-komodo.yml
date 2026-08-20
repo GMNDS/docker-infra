@@ -1,0 +1,45 @@
+
+name: Generate Komodo resources
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "compose/**"
+      - "swarm/stacks/**"
+      - "komodo/generate-resources.sh"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate resources.toml
+        shell: bash
+        run: |
+          chmod +x komodo/generate-resources.sh
+          ./komodo/generate-resources.sh
+
+      - name: Commit generated resources
+        shell: bash
+        run: |
+          if git diff --quiet -- komodo/resources.toml; then
+            echo "resources.toml is already up to date"
+            exit 0
+          fi
+
+          git config user.name "automation"
+          git config user.email "automation@localhost"
+
+          git add komodo/resources.toml
+          git commit -m "chore: regenerate Komodo resources"
+          git push
