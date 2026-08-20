@@ -102,6 +102,7 @@ run_directory = "swarm/stacks/chatwoot"
 file_paths = [
   "chatwoot.yml",
   "ev.yml",
+  "migrate.yml",
   "pg.yml",
   "redis.yml"
 ]
@@ -212,7 +213,6 @@ DOMAIN = [[DOMAIN]]
 
 [[stack]]
 name = "n8n"
-deploy = false
 [stack.config]
 swarm = "asteri"
 git_account = "gmnds"
