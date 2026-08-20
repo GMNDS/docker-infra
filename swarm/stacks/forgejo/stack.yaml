@@ -20,7 +20,7 @@ services:
       # Placement constraints restrict where Traefik tasks can run.
       # Running on manager nodes is common for accessing the Swarm API via the socket.
         constraints:
-          - node.role == manager
+          - node.hostname == asteri-is
       restart_policy:
         condition: on-failure
       labels:
