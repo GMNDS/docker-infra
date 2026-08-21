@@ -93,7 +93,7 @@ DOMAIN = [[DOMAIN]]
 
 [[stack]]
 name = "chatwoot"
-deploy = true
+deploy = false
 [stack.config]
 swarm = "asteri"
 linked_repo = "astrum-stack"
