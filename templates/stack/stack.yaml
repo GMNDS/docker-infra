@@ -1,0 +1,66 @@
+# Copie esta pasta para `swarm/stacks/<nome-da-stack>` e ajuste os nomes.
+# Carregue o `.env` no shell antes de executar `docker stack deploy`.
+
+secrets:
+  app_secret:
+    external: true
+
+services:
+  app:
+    # Prefira uma versão fixa ou digest; evite `latest`.
+    image: ${APP_IMAGE:?Defina APP_IMAGE com uma versão fixa}
+    environment:
+      APP_ENV: production
+      TZ: ${TZ:-America/Sao_Paulo}
+      # Use esta variável somente se a imagem aceitar o padrão *_FILE.
+      APP_SECRET_FILE: /run/secrets/app_secret
+    secrets:
+      - app_secret
+    networks:
+      - traefik_proxy
+    volumes:
+      - app_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:${APP_PORT}/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      replicas: ${APP_REPLICAS:-1}
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      placement:
+        constraints:
+          - node.hostname == ${NODE_HOSTNAME:?Defina NODE_HOSTNAME}
+      resources:
+        limits:
+          cpus: ${APP_CPU_LIMIT:-0.50}
+          memory: ${APP_MEMORY_LIMIT:-512M}
+        reservations:
+          memory: ${APP_MEMORY_RESERVATION:-128M}
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.${STACK_NAME}.rule=Host(`${APP_DOMAIN}`)
+        - traefik.http.routers.${STACK_NAME}.entrypoints=websecure
+        - traefik.http.routers.${STACK_NAME}.tls=true
+        - traefik.http.routers.${STACK_NAME}.service=${STACK_NAME}
+        - traefik.http.services.${STACK_NAME}.loadbalancer.server.port=${APP_PORT}
+
+volumes:
+  app_data:
+    external: true
+    name: ${STACK_NAME}_data
+
+networks:
+  traefik_proxy:
+    external: true
