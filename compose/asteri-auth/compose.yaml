@@ -107,7 +107,7 @@ services:
       AUTHENTIK_HOST: https://auth.asterimoon.com
       AUTHENTIK_HOST_BROWSER: https://auth.asterimoon.com
       AUTHENTIK_INSECURE: false
-      AUTHENTIK_TOKEN: file:///run/secrets/authentik_ldap_token
+      AUTHENTIK_TOKEN: ${AUTHENTIK_TOKEN}
     ports:
       - 389:3389
       - 636:6636
