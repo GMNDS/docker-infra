@@ -39,8 +39,7 @@ name = "adguard"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/adguard"
 file_paths = ["stack.yml"]
 environment = """
@@ -58,8 +57,7 @@ name = "asteri-auth"
 deploy = true
 [stack.config]
 server = "asteri-is"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "compose/asteri-auth"
 file_paths = ["compose.yaml"]
 environment = """
@@ -77,8 +75,7 @@ name = "beszel"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/beszel"
 file_paths = ["stack.yaml"]
 environment = """
@@ -96,8 +93,7 @@ name = "chatwoot"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/chatwoot"
 file_paths = [
   "chatwoot.yml",
@@ -120,8 +116,7 @@ name = "dokploy"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/dokploy"
 file_paths = ["stack.yml"]
 environment = """
@@ -139,8 +134,7 @@ name = "forgejo"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/forgejo"
 file_paths = ["stack.yaml"]
 environment = """
@@ -158,8 +152,7 @@ name = "gossip-girl"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/gossip-girl"
 file_paths = ["stack.yaml"]
 environment = """
@@ -177,8 +170,7 @@ name = "jellyfin"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/jellyfin"
 file_paths = ["stack.yaml"]
 environment = """
@@ -197,8 +189,7 @@ name = "mosquitto"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/mosquitto"
 file_paths = ["stack.yaml"]
 environment = """
@@ -215,8 +206,7 @@ DOMAIN = [[DOMAIN]]
 name = "n8n"
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/n8n"
 file_paths = ["stack.yaml"]
 environment = """
@@ -233,8 +223,7 @@ DOMAIN = [[DOMAIN]]
 name = "portainer"
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/portainer"
 file_paths = ["stack.yaml"]
 environment = """
@@ -252,8 +241,7 @@ name = "proxy"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/proxy"
 file_paths = ["stack.yaml"]
 environment = """
@@ -271,8 +259,7 @@ name = "rustfs"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/rustfs"
 file_paths = ["stack.yaml"]
 environment = """
@@ -290,8 +277,7 @@ name = "vaultwarden"
 deploy = true
 [stack.config]
 swarm = "asteri"
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
+linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/vaultwarden"
 file_paths = ["stack.yaml"]
 environment = """
@@ -324,8 +310,7 @@ name = "astrum-stack"
 [repo.config]
 server = "asteri-is"
 git_https = false
-git_account = "gmnds"
-repo = "GMNDS/docker-infra"
+linked_repo = "astrum-stack"
 path = "/srv/docker/repos"
 
 ##
