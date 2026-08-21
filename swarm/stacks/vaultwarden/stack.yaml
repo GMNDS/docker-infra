@@ -24,7 +24,7 @@ services:
       - SMTP_FROM=${VW_SMTP_FROM:?Please set the VW_SMTP_FROM environment variable}
       - SMTP_USERNAME=${VW_SMTP_USERNAME:?Please set the VW_SMTP_USERNAME environment variable}
       - SMTP_PASSWORD_FILE=/run/secrets/vaultwarden_smtp_pass
-      - DOMAIN=https://${VW_DOMAIN:?Please set the VW_DOMAIN environment variable}
+      - DOMAIN=https://${APP_DOMAIN:?Please set the APP_DOMAIN environment variable}
       - TZ=${TZ:-America/Sao_Paulo}
     # ports:
       # - 80:80
@@ -41,7 +41,7 @@ services:
           - node.hostname == ${NODE_HOSTNAME:?Please set the NODE_HOSTNAME environment variable}
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.vault.rule=Host(`${VW_DOMAIN}`)"
+        - "traefik.http.routers.vault.rule=Host(`${APP_DOMAIN}`)"
         - "traefik.http.routers.vault.entrypoints=websecure"
         - "traefik.http.routers.vault.tls=true"
         - "traefik.http.routers.vault.service=vault"
