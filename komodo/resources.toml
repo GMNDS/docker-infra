@@ -41,6 +41,7 @@ server = "asteri-is"
 git_https = false
 git_account = "gmnds"
 repo = "gmnds/docker-infra"
+path = "/srv/docker/repos"
 
 ##
 
