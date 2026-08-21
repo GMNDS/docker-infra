@@ -34,6 +34,15 @@ send_unhealthy_alerts = true
 
 ##
 
+[[repo]]
+name = "astrum-stack"
+[repo.config]
+server = "asteri-is"
+git_account = "gmnds"
+repo = "gmnds/docker-infra"
+
+##
+
 [[stack]]
 name = "adguard"
 deploy = true
