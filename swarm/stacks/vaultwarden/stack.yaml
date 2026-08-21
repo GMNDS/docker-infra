@@ -12,7 +12,7 @@ services:
     environment:
       # PUSH
       - PUSH_ENABLED=true
-      - PUSH_INSTALATION_ID_FILE=/run/secrets/vaultwarden_push_id
+      - PUSH_INSTALLATION_ID_FILE=/run/secrets/vaultwarden_push_id
       - PUSH_INSTALLATION_KEY_FILE=/run/secrets/vaultwarden_push_key
       - PUSH_RELAY_URI=https://push.bitwarden.com
       - PUSH_IDENTITY_URI=https://identity.bitwarden.com
