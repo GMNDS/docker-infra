@@ -38,6 +38,7 @@ send_unhealthy_alerts = true
 name = "astrum-stack"
 [repo.config]
 server = "asteri-is"
+git_https = false
 git_account = "gmnds"
 repo = "gmnds/docker-infra"
 
