@@ -20,7 +20,7 @@ SWARM = "asteri"
 
 GIT_PROVIDER = "github.com"
 GIT_ACCOUNT = "gmnds"
-REPO = "gmnds/docker-infra"
+LINKED_REPO = "astrum-stack"
 BRANCH = "main"
 
 # Existem no Komodo, mas não sobem automaticamente.
@@ -204,10 +204,7 @@ def add_stack(
             f"Target inválido: {target_type}"
         )
 
-    config.add("git_provider", GIT_PROVIDER)
-    config.add("git_account", GIT_ACCOUNT)
-    config.add("repo", REPO)
-    config.add("branch", BRANCH)
+    config.add("linked_repo", LINKED_REPO)
     config.add("run_directory", relative_dir)
     config.add("file_paths", files)
     config.add(
