@@ -315,13 +315,6 @@ TZ=[[TZ]]
 DOCKER_ROOT=[[DOCKER_ROOT]]
 DOMAIN=[[DOMAIN]]
 """
-[[repo]]
-name = "astrum-stack"
-[repo.config]
-server = "asteri-is"
-git_https = false
-linked_repo = "astrum-stack"
-path = "/srv/docker/repos"
 
 ##
 
