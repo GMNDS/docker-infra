@@ -9,6 +9,12 @@ secrets:
 services:
   app:
     image: vaultwarden/server
+
+    secrets:
+      - vaultwarden_push_id
+      - vaultwarden_push_key
+      - vaultwarden_smtp_pass
+      
     environment:
       # PUSH
       - PUSH_ENABLED=true
