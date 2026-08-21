@@ -187,6 +187,7 @@ PGID = [[PGID]]
 TZ = [[TZ]]
 DOCKER_ROOT = [[DOCKER_ROOT]]
 DOMAIN = [[DOMAIN]]
+APP_DOMAIN = [[JELLYFIN_APP_DOMAIN]]
 """
 
 ##
@@ -400,4 +401,39 @@ is_secret = false
 [[variable]]
 name = "TZ"
 value = "America/Sao_Paulo"
+is_secret = false
+
+##
+
+[[variable]]
+name = "JELLYFIN_APP_DOMAIN"
+value = "midia.astrum.app.br"
+is_secret = false
+
+##
+
+[[variable]]
+name = "SUWAYOMI_APP_DOMAIN"
+value = "suwayomi.astrum.app.br"
+is_secret = false
+
+##
+
+[[variable]]
+name = "YOMIKAGE_APP_DOMAIN"
+value = "yomikage.astrum.app.br"
+is_secret = false
+
+##
+
+[[variable]]
+name = "SUWAYOMI_AUTH_USERNAME"
+value = "gmnds"
+is_secret = false
+
+##
+
+[[variable]]
+name = "YOMIKAGE_AUTH_USERNAME"
+value = "gmnds"
 is_secret = false

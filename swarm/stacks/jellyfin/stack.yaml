@@ -4,9 +4,9 @@ services:
     image: linuxserver/jellyfin:10.11.11
 
     environment:
-      - PUID=1002
-      - PGID=1002
-      - TZ=America/Sao_Paulo
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
 
     volumes:
       - ${DOCKER_ROOT}/volumes/jellyfin:/config
@@ -29,7 +29,7 @@ services:
         - traefik.enable=true
         - traefik.swarm.network=traefik_proxy
 
-        - traefik.http.routers.jellyfin.rule=Host(`midia.astrum.app.br`)
+        - traefik.http.routers.jellyfin.rule=Host(`${APP_DOMAIN:?Defina APP_DOMAIN}`)
         - traefik.http.routers.jellyfin.entrypoints=websecure
         - traefik.http.routers.jellyfin.tls=true
 
@@ -38,4 +38,3 @@ services:
 networks:
   traefik_proxy:
     external: true
-
