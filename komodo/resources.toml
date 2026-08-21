@@ -304,6 +304,21 @@ DOMAIN = [[DOMAIN]]
 
 ##
 
+[[stack]]
+name = "suwayomi"
+deploy = true
+
+[stack.config]
+swarm = "asteri"
+linked_repo = "astrum-stack"
+run_directory = "swarm/stacks/suwayomi"
+file_paths = ["stack.yaml"]
+environment = """PUID=[[PUID]]
+PGID=[[PGID]]
+TZ=[[TZ]]
+DOCKER_ROOT=[[DOCKER_ROOT]]
+DOMAIN=[[DOMAIN]]
+"""
 [[repo]]
 name = "astrum-stack"
 [repo.config]
