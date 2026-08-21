@@ -1,17 +1,27 @@
-version: "3.7"
+secrets:
+  chatwoot_postgres_password:
+    external: true
+  chatwoot_secret_key_base:
+    external: true
 
 services:
   chatwoot_migrate:
-    image: chatwoot/chatwoot:v4.8.0
-    command: bundle exec rails db:chatwoot_prepare
+    image: chatwoot/chatwoot:v4.9.1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export SECRET_KEY_BASE="$$(cat /run/secrets/chatwoot_secret_key_base)"
+        export POSTGRES_PASSWORD="$$(cat /run/secrets/chatwoot_postgres_password)"
+        exec docker/entrypoints/rails.sh bundle exec rails db:chatwoot_prepare
     environment:
       - RAILS_ENV=production
       - POSTGRES_HOST=postgres
       - POSTGRES_USERNAME=postgres
-      - POSTGRES_PASSWORD=REDACTED_POSTGRES_PASSWORD
       - POSTGRES_DATABASE=chatwoot
       - REDIS_URL=redis://redis:6379
-      - SECRET_KEY_BASE=REDACTED_SECRET_KEY_BASE
+    secrets:
+      - chatwoot_postgres_password
+      - chatwoot_secret_key_base
     networks:
       - traefik_proxy
     deploy:

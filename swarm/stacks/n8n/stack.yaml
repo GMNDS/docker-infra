@@ -1,5 +1,11 @@
 version: "3.7"
 
+secrets:
+  n8n_postgres_password:
+    external: true
+  n8n_encryption_key:
+    external: true
+
 # Campos de extensão para reduzir repetição
 x-n8n-env: &n8n-env
   DB_TYPE: postgresdb
@@ -7,8 +13,8 @@ x-n8n-env: &n8n-env
   DB_POSTGRESDB_HOST: n8n-postgres
   DB_POSTGRESDB_PORT: "5432"
   DB_POSTGRESDB_USER: postgres
-  DB_POSTGRESDB_PASSWORD: "REDACTED_POSTGRES_PASSWORD"
-  N8N_ENCRYPTION_KEY: "REDACTED_N8N_ENCRYPTION_KEY"
+  DB_POSTGRESDB_PASSWORD_FILE: /run/secrets/n8n_postgres_password
+  N8N_ENCRYPTION_KEY_FILE: /run/secrets/n8n_encryption_key
   N8N_HOST: "n8n.astrum.app.br"
   N8N_EDITOR_BASE_URL: "https://n8n.astrum.app.br/"
   N8N_PROTOCOL: https
@@ -48,8 +54,10 @@ services:
     environment:
       POSTGRES_DB: n8ndb
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "REDACTED_POSTGRES_PASSWORD"
+      POSTGRES_PASSWORD_FILE: /run/secrets/n8n_postgres_password
       PGDATA: /var/lib/postgresql/data/pgdata
+    secrets:
+      - n8n_postgres_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     deploy:
@@ -90,6 +98,9 @@ services:
       - traefik_proxy
     environment:
       <<: *n8n-env
+    secrets:
+      - n8n_postgres_password
+      - n8n_encryption_key
     deploy:
       <<: *deploy-common
       replicas: 1
@@ -111,6 +122,9 @@ services:
       - traefik_proxy
     environment:
       <<: *n8n-env
+    secrets:
+      - n8n_postgres_password
+      - n8n_encryption_key
     deploy:
       <<: *deploy-common
       replicas: 2
@@ -132,6 +146,9 @@ services:
       - traefik_proxy
     environment:
       <<: *n8n-env
+    secrets:
+      - n8n_postgres_password
+      - n8n_encryption_key
     deploy:
       <<: *deploy-common
       replicas: 1

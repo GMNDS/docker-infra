@@ -1,16 +1,18 @@
-version: "3.7"
+secrets:
+  chatwoot_postgres_password:
+    external: true
 
 services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      - POSTGRES_PASSWORD=REDACTED_POSTGRES_PASSWORD
+      - POSTGRES_PASSWORD_FILE=/run/secrets/chatwoot_postgres_password
       - TZ=America/Sao_Paulo
       - PG_MAX_CONNECTIONS=500
+    secrets:
+      - chatwoot_postgres_password
     networks:
       - traefik_proxy
-    ports:
-      - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ${DOCKER_ROOT}/volumes/chatwoot/init_pg:/docker-entrypoint-initdb.d
@@ -34,4 +36,3 @@ volumes:
 networks:
   traefik_proxy:
     external: true
-

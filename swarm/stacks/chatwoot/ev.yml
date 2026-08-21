@@ -1,22 +1,16 @@
-version: "3.7"
-
 services:
-  evolution_v2:  
-    image: evoapicloud/evolution-api:v2.3.7 ## Versão da Evolution API
+  evolution_v2:
+    image: evoapicloud/evolution-api:v2.3.7
     volumes:
       - evolution_instancesv2:/evolution/instances
     networks:
       - traefik_proxy
-    ports:
-      - target: 8080
-        published: 8080
-        mode: host
     environment:
     ## Url da Evolution API
-    - SERVER_URL=https://evolution.astrum.app.br
+    - SERVER_URL=https://${EVOLUTION_DOMAIN:?Defina EVOLUTION_DOMAIN}
     ## Dados de Autenticação
     - AUTHENTICATION_TYPE=apikey
-    - AUTHENTICATION_API_KEY=REDACTED_EVOLUTION_API_KEY ## GLOBAL API KEY
+    - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:?Defina EVOLUTION_API_KEY}
     - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
     ## Configurações
     - LANGUAGE=pt-BR
@@ -27,7 +21,7 @@ services:
     - CONFIG_SESSION_PHONE_VERSION=2.3000.1031221906
     # - CONFIG_SESSION_PHONE_VERSION=2.3000.1028148389
     ## Configurações do Whatsapp Business Cloud (Api Oficial)
-    - WA_BUSINESS_TOKEN_WEBHOOK=evolution
+    - WA_BUSINESS_TOKEN_WEBHOOK=${EVOLUTION_WEBHOOK_TOKEN:?Defina EVOLUTION_WEBHOOK_TOKEN}
     - WA_BUSINESS_URL=https://graph.facebook.com
     - WA_BUSINESS_VERSION=v20.0
     - WA_BUSINESS_LANGUAGE=pt_BR
@@ -37,7 +31,7 @@ services:
     ## Aivar Banco de Dados Postgres
     - DATABASE_ENABLED=true
     - DATABASE_PROVIDER=postgresql
-    - DATABASE_CONNECTION_URI=postgresql://postgres:REDACTED_POSTGRES_PASSWORD@postgres:5432/evolution
+    - DATABASE_CONNECTION_URI=${EVOLUTION_DATABASE_URI:?Defina EVOLUTION_DATABASE_URI}
     - DATABASE_CONNECTION_CLIENT_NAME=evolution
     - DATABASE_SAVE_DATA_INSTANCE=true
     - DATABASE_SAVE_DATA_NEW_MESSAGE=true
@@ -72,11 +66,11 @@ services:
     - CHATWOOT_ENABLED=true
     - CHATWOOT_MESSAGE_READ=true
     - CHATWOOT_MESSAGE_DELETE=true
-    - CHATWOOT_IMPORT_DATABASE_CONNECTION_URI=postgresql://postgres:REDACTED_POSTGRES_PASSWORD@postgres:5432/chatwoot?sslmode=disable
+    - CHATWOOT_IMPORT_DATABASE_CONNECTION_URI=${EVOLUTION_CHATWOOT_DATABASE_URI:?Defina EVOLUTION_CHATWOOT_DATABASE_URI}
     - CHATWOOT_IMPORT_PLACEHOLDER_MEDIA_MESSAGE=false ## true = Importar midia | false = Não importar midia     
     ## Dados do RabbitMQ
     - RABBITMQ_ENABLED=false
-    - RABBITMQ_URI=amqp://admin:admin@rabbitmq:5672/default
+    - RABBITMQ_URI=${RABBITMQ_URI:-amqp://rabbitmq:5672/default}
     - RABBITMQ_EXCHANGE_NAME=evolution
     - RABBITMQ_GLOBAL_ENABLED=false
     - RABBITMQ_EVENTS_APPLICATION_STARTUP=false
@@ -144,7 +138,7 @@ services:
         - node.role == manager
       labels:
       - traefik.enable=true
-      - traefik.http.routers.evolution_v2.rule=Host(`evolution.astrum.app.br`) ## Url da aplicação
+      - traefik.http.routers.evolution_v2.rule=Host(`${EVOLUTION_DOMAIN}`)
       - traefik.http.routers.evolution_v2.entrypoints=websecure
       - traefik.http.routers.evolution_v2.priority=1
       - traefik.http.routers.evolution_v2.tls=true

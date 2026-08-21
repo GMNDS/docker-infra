@@ -1,64 +1,63 @@
-version: "3.7"
+secrets:
+  chatwoot_postgres_password:
+    external: true
+  chatwoot_secret_key_base:
+    external: true
+  chatwoot_smtp_password:
+    external: true
 
-##############
-#
-# Para configurar o chatwoot, execute o comando abaixo no console do container:
-#
-# bundle exec rails db:chatwoot_prepare
-#
-# Variáveis de Ambiente:
-#
-# https://www.chatwoot.com/docs/self-hosted/configuration/environment-variables
-#
-#############
+x-chatwoot-environment: &chatwoot-environment
+  CHATWOOT_HUB_URL: https://${CHATWOOT_DOMAIN:?Defina CHATWOOT_DOMAIN}
+  INSTALLATION_NAME: ${CHATWOOT_INSTALLATION_NAME:-Chatwoot}
+  NODE_ENV: production
+  RAILS_ENV: production
+  INSTALLATION_ENV: docker
+  FRONTEND_URL: https://${CHATWOOT_DOMAIN}
+  DEFAULT_LOCALE: ${CHATWOOT_LOCALE:-pt_BR}
+  FORCE_SSL: "true"
+  ENABLE_ACCOUNT_SIGNUP: "false"
+  REDIS_URL: redis://redis:6379
+  POSTGRES_HOST: postgres
+  POSTGRES_USERNAME: postgres
+  POSTGRES_DATABASE: chatwoot
+  ACTIVE_STORAGE_SERVICE: local
+  RAILS_LOG_TO_STDOUT: "true"
+  USE_INBOX_AVATAR_FOR_BOT: "true"
+  SIDEKIQ_CONCURRENCY: "10"
+  RACK_TIMEOUT_SERVICE_TIMEOUT: "0"
+  RAILS_MAX_THREADS: "5"
+  WEB_CONCURRENCY: "2"
+  ENABLE_RACK_ATTACK: "false"
+  WEBHOOKS_TRIGGER_TIMEOUT: "40"
+  MAILER_SENDER_EMAIL: ${CHATWOOT_MAILER_SENDER:?Defina CHATWOOT_MAILER_SENDER}
+  SMTP_DOMAIN: ${CHATWOOT_SMTP_DOMAIN:?Defina CHATWOOT_SMTP_DOMAIN}
+  SMTP_ADDRESS: ${CHATWOOT_SMTP_ADDRESS:?Defina CHATWOOT_SMTP_ADDRESS}
+  SMTP_PORT: ${CHATWOOT_SMTP_PORT:-587}
+  SMTP_USERNAME: ${CHATWOOT_SMTP_USERNAME:?Defina CHATWOOT_SMTP_USERNAME}
+  SMTP_AUTHENTICATION: login
+  SMTP_ENABLE_STARTTLS_AUTO: "true"
+  SMTP_OPENSSL_VERIFY_MODE: peer
 
 services:
   chatwoot_app:
-    image: chatwoot/chatwoot:v4.9.1 ## Versão do Chatwoot
-    command: bundle exec rails s -p 3000 -b 0.0.0.0
-    entrypoint: docker/entrypoints/rails.sh
+    image: chatwoot/chatwoot:v4.9.1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export SECRET_KEY_BASE="$$(cat /run/secrets/chatwoot_secret_key_base)"
+        export POSTGRES_PASSWORD="$$(cat /run/secrets/chatwoot_postgres_password)"
+        export SMTP_PASSWORD="$$(cat /run/secrets/chatwoot_smtp_password)"
+        exec docker/entrypoints/rails.sh bundle exec rails s -p 3000 -b 0.0.0.0
     volumes:
       - chatwoot_data:/app/storage ## Diretório dos arquivos de conversa
       - chatwoot_public:/app ## Diretório de todos os arquivos do chatwoot
     networks:
-      - traefik_proxy ## Nome da rede interna
-    environment:
-      - CHATWOOT_HUB_URL=https://chat.astrum.app.br #
-      - INSTALLATION_NAME=Astrum ## Nome da empresa
-      - NODE_ENV=production
-      - RAILS_ENV=production
-      - INSTALLATION_ENV=docker
-      - SECRET_KEY_BASE=REDACTED_SECRET_KEY_BASE ## Key aleatória gerada aleatóriamente
-      - FRONTEND_URL=https://chat.astrum.app.br ## Url do Chatwoot
-      # - DEFAULT_LOCALE=pt_BR
-      - FORCE_SSL=true
-      - ENABLE_ACCOUNT_SIGNUP=false ## false = Desativar novas inscrições no inicio | true = Ativar novas inscrições no inicio
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - POSTGRES_USERNAME=postgres
-      - POSTGRES_PASSWORD=REDACTED_POSTGRES_PASSWORD ## Senha do postgres
-      - POSTGRES_DATABASE=chatwoot
-      - ACTIVE_STORAGE_SERVICE=local
-      - RAILS_LOG_TO_STDOUT=true
-      - USE_INBOX_AVATAR_FOR_BOT=true
-      # Performance
-      - SIDEKIQ_CONCURRENCY=10
-      - RACK_TIMEOUT_SERVICE_TIMEOUT=0
-      - RAILS_MAX_THREADS=5
-      - WEB_CONCURRENCY=2
-      - ENABLE_RACK_ATTACK=false
-      - WEBHOOKS_TRIGGER_TIMEOUT=40
-      # Servidor de Email Gmail
-      - MAILER_SENDER_EMAIL=redacted@example.com
-      - SMTP_DOMAIN=gmail.com
-      - SMTP_ADDRESS=smtp.gmail.com
-      - SMTP_PORT=587
-      - SMTP_USERNAME=redacted@example.com
-      - SMTP_PASSWORD=REDACTED_SMTP_PASSWORD
-      - SMTP_AUTHENTICATION=login
-      - SMTP_ENABLE_STARTTLS_AUTO=true
-      - SMTP_OPENSSL_VERIFY_MODE=peer
-      - MAILER_INBOUND_EMAIL_DOMAIN=redacted@example.com
+      - traefik_proxy
+    environment: *chatwoot-environment
+    secrets:
+      - chatwoot_postgres_password
+      - chatwoot_secret_key_base
+      - chatwoot_smtp_password
     deploy:
       mode: replicated
       replicas: 1
@@ -73,13 +72,13 @@ services:
         - traefik.enable=true
 
         # Chatwoot 
-        - traefik.http.routers.chatwoot_app.rule=Host(`chat.astrum.app.br`)
+        - traefik.http.routers.chatwoot_app.rule=Host(`${CHATWOOT_DOMAIN}`)
         - traefik.http.routers.chatwoot_app.entrypoints=websecure
         - traefik.http.routers.chatwoot_app.tls=true
         - traefik.http.routers.chatwoot_app.service=chatwoot_service
 
         # Help center
-        - traefik.http.routers.chatwoot_help.rule=Host(`help.astrum.app.br`)
+        - traefik.http.routers.chatwoot_help.rule=Host(`${CHATWOOT_HELP_DOMAIN:?Defina CHATWOOT_HELP_DOMAIN}`)
         - traefik.http.routers.chatwoot_help.entrypoints=websecure
         - traefik.http.routers.chatwoot_help.tls=true
         - traefik.http.routers.chatwoot_help.service=chatwoot_service
@@ -89,50 +88,24 @@ services:
         - traefik.http.services.chatwoot_service.loadbalancer.passhostheader=true 
 
   chatwoot_sidekiq:
-    image: chatwoot/chatwoot:v4.9.1 ## Versão do Chatwoot
-    command: bundle exec sidekiq -C config/sidekiq.yml
+    image: chatwoot/chatwoot:v4.9.1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export SECRET_KEY_BASE="$$(cat /run/secrets/chatwoot_secret_key_base)"
+        export POSTGRES_PASSWORD="$$(cat /run/secrets/chatwoot_postgres_password)"
+        export SMTP_PASSWORD="$$(cat /run/secrets/chatwoot_smtp_password)"
+        exec docker/entrypoints/rails.sh bundle exec sidekiq -C config/sidekiq.yml
     volumes:
       - chatwoot_data:/app/storage ## Diretório dos arquivos de conversa
       - chatwoot_public:/app ## Diretório de todos os arquivos do chatwoot
     networks:
       - traefik_proxy ## Nome da rede interna
-    environment:
-      - CHATWOOT_HUB_URL=https://chat.astrum.app.br #
-      - INSTALLATION_NAME=Astrum ## Nome da empresa
-      - NODE_ENV=production
-      - RAILS_ENV=production
-      - INSTALLATION_ENV=docker
-      - SECRET_KEY_BASE=REDACTED_SECRET_KEY_BASE ## Key aleatória gerada aleatóriamente
-      - FRONTEND_URL=https://chat.astrum.app.br ## Url do Chatwoot
-      - DEFAULT_LOCALE=pt_BR
-      - FORCE_SSL=true
-      - ENABLE_ACCOUNT_SIGNUP=false ## false = Desativar novas inscrições no inicio | true = Ativar novas inscrições no inicio
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - POSTGRES_USERNAME=postgres
-      - POSTGRES_PASSWORD=REDACTED_POSTGRES_PASSWORD ## Senha do postgres
-      - POSTGRES_DATABASE=chatwoot
-      - ACTIVE_STORAGE_SERVICE=local
-      - RAILS_LOG_TO_STDOUT=true
-      - USE_INBOX_AVATAR_FOR_BOT=true
-      # Performance
-      - SIDEKIQ_CONCURRENCY=10
-      - RACK_TIMEOUT_SERVICE_TIMEOUT=0
-      - RAILS_MAX_THREADS=5
-      - WEB_CONCURRENCY=2
-      - ENABLE_RACK_ATTACK=false
-      - WEBHOOKS_TRIGGER_TIMEOUT=40
-      # Servidor de Email Gmail
-      - MAILER_SENDER_EMAIL=Chatwoot <redacted@example.com>
-      - SMTP_DOMAIN=gmail.com
-      - SMTP_ADDRESS=smtp.gmail.com
-      - SMTP_PORT=587
-      - SMTP_USERNAME=redacted@example.com
-      - SMTP_PASSWORD=REDACTED_SMTP_PASSWORD
-      - SMTP_AUTHENTICATION=login
-      - SMTP_ENABLE_STARTTLS_AUTO=true
-      - SMTP_OPENSSL_VERIFY_MODE=peer
-      - MAILER_INBOUND_EMAIL_DOMAIN=redacted@example.com
+    environment: *chatwoot-environment
+    secrets:
+      - chatwoot_postgres_password
+      - chatwoot_secret_key_base
+      - chatwoot_smtp_password
     deploy:
       mode: replicated
       replicas: 1
