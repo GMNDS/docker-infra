@@ -1,12 +1,19 @@
 version: "3.9"
 
+secrets:
+  dokploy_postgres_password:
+    external: true
+
 services:
   dokploy-postgres:
     image: postgres:16
     environment:
       POSTGRES_USER: dokploy
       POSTGRES_DB: dokploy
-      POSTGRES_PASSWORD: REDACTED_DOKPLOY_POSTGRES_PASSWORD
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - source: dokploy_postgres_password
+        target: postgres_password
     volumes:
       - dokploy-postgres:/var/lib/postgresql/data
     networks:
@@ -37,11 +44,11 @@ services:
         # mode: host
     environment:
       TZ: America/Sao_Paulo
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       # NODE_ENV: production
       # FORCE_COLOR: "1"
       # NODE_OPTIONS: "--enable-source-maps"
       # NPM_CONFIG_LOGLEVEL: info
-      DATABASE_URL: postgres://dokploy:REDACTED_DOKPLOY_POSTGRES_PASSWORD@dokploy-postgres:5432/dokploy
       ADVERTISE_ADDR: 10.13.14.1
       # REDIS_URL: redis://redis:6379
     volumes:
@@ -49,6 +56,9 @@ services:
       - /etc/dokploy:/etc/dokploy
       - ${DOCKER_ROOT}/volumes/traefik/traefik.yml:/etc/dokploy/traefik/traefik.yml
       - ${DOCKER_ROOT}/volumes/traefik/dynamic:/etc/dokploy/traefik/dynamic
+    secrets:
+      - source: dokploy_postgres_password
+        target: postgres_password
     networks:
       - traefik_proxy
       - dokploy-network
