@@ -34,17 +34,6 @@ send_unhealthy_alerts = true
 
 ##
 
-[[repo]]
-name = "astrum-stack"
-[repo.config]
-server = "asteri-is"
-git_https = false
-git_account = "gmnds"
-repo = "gmnds/docker-infra"
-path = "/srv/docker/repos"
-
-##
-
 [[stack]]
 name = "adguard"
 deploy = true
@@ -71,6 +60,9 @@ server = "asteri-is"
 linked_repo = "astrum-stack"
 run_directory = "compose/asteri-auth"
 file_paths = ["compose.yaml"]
+additional_env_files = [
+  { path = "/srv/docker/env_files/authentik.env", track = true }
+]
 environment = """
 PUID = [[PUID]]
 PGID = [[PGID]]
@@ -284,6 +276,27 @@ DOMAIN = [[DOMAIN]]
 ##
 
 [[stack]]
+name = "suwayomi"
+deploy = true
+[stack.config]
+swarm = "asteri"
+linked_repo = "astrum-stack"
+run_directory = "swarm/stacks/suwayomi"
+file_paths = ["stack.yaml"]
+additional_env_files = [
+  { path = "/srv/docker/env_files/suwayomi.env", track = true }
+]
+environment = """
+PUID=[[PUID]]
+PGID=[[PGID]]
+TZ=[[TZ]]
+DOCKER_ROOT=[[DOCKER_ROOT]]
+DOMAIN=[[DOMAIN]]
+"""
+
+##
+
+[[stack]]
 name = "vaultwarden"
 deploy = true
 [stack.config]
@@ -291,6 +304,9 @@ swarm = "asteri"
 linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/vaultwarden"
 file_paths = ["stack.yaml"]
+additional_env_files = [
+  { path = "/srv/docker/env_files/vaultwarden.env", track = true }
+]
 environment = """
 PUID = [[PUID]]
 PGID = [[PGID]]
@@ -301,21 +317,14 @@ DOMAIN = [[DOMAIN]]
 
 ##
 
-[[stack]]
-name = "suwayomi"
-deploy = true
-
-[stack.config]
-swarm = "asteri"
-linked_repo = "astrum-stack"
-run_directory = "swarm/stacks/suwayomi"
-file_paths = ["stack.yaml"]
-environment = """PUID=[[PUID]]
-PGID=[[PGID]]
-TZ=[[TZ]]
-DOCKER_ROOT=[[DOCKER_ROOT]]
-DOMAIN=[[DOMAIN]]
-"""
+[[repo]]
+name = "astrum-stack"
+[repo.config]
+server = "asteri-is"
+git_https = false
+git_account = "gmnds"
+repo = "gmnds/docker-infra"
+path = "/srv/docker/repos"
 
 ##
 
@@ -389,6 +398,13 @@ is_secret = false
 ##
 
 [[variable]]
+name = "JELLYFIN_APP_DOMAIN"
+value = "midia.astrum.app.br"
+is_secret = false
+
+##
+
+[[variable]]
 name = "PGID"
 value = "1002"
 is_secret = false
@@ -403,20 +419,6 @@ is_secret = false
 ##
 
 [[variable]]
-name = "TZ"
-value = "America/Sao_Paulo"
-is_secret = false
-
-##
-
-[[variable]]
-name = "JELLYFIN_APP_DOMAIN"
-value = "midia.astrum.app.br"
-is_secret = false
-
-##
-
-[[variable]]
 name = "SUWAYOMI_APP_DOMAIN"
 value = "suwayomi.astrum.app.br"
 is_secret = false
@@ -424,15 +426,22 @@ is_secret = false
 ##
 
 [[variable]]
-name = "YOMIKAGE_APP_DOMAIN"
-value = "yomikage.astrum.app.br"
+name = "SUWAYOMI_AUTH_USERNAME"
+value = "gmnds"
 is_secret = false
 
 ##
 
 [[variable]]
-name = "SUWAYOMI_AUTH_USERNAME"
-value = "gmnds"
+name = "TZ"
+value = "America/Sao_Paulo"
+is_secret = false
+
+##
+
+[[variable]]
+name = "YOMIKAGE_APP_DOMAIN"
+value = "yomikage.astrum.app.br"
 is_secret = false
 
 ##
