@@ -93,7 +93,6 @@ DOMAIN = [[DOMAIN]]
 
 [[stack]]
 name = "chatwoot"
-deploy = false
 [stack.config]
 swarm = "asteri"
 linked_repo = "astrum-stack"
@@ -116,7 +115,6 @@ DOMAIN = [[DOMAIN]]
 
 [[stack]]
 name = "dokploy"
-deploy = false
 [stack.config]
 swarm = "asteri"
 linked_repo = "astrum-stack"
@@ -280,6 +278,7 @@ name = "suwayomi"
 deploy = true
 [stack.config]
 swarm = "asteri"
+destroy_before_deploy = true
 linked_repo = "astrum-stack"
 run_directory = "swarm/stacks/suwayomi"
 file_paths = ["stack.yaml"]
